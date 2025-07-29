@@ -23,24 +23,26 @@ struct Cell {
 };
 
 std::vector<std::vector<Cell>> maze;
-std::mt19937 rng(std::random_device{}());
+std::mt19937 rng(std::random_device{}()); //randon number engine
 
+
+//function that creates maze
 void carveMaze(int sx = 0, int sy = 0) {
     const int DX[4] = { 0, 1, 0, -1 }; // UP, RIGHT, DOWN, LEFT
     const int DY[4] = { -1, 0, 1, 0 };
 
     maze.assign(COLS, std::vector<Cell>(ROWS)); // Clear maze
-    std::stack<sf::Vector2i> st;
-    st.push({ sx, sy });
-    maze[sx][sy].visited = true;
+    std::stack<sf::Vector2i> st; //create a stack of integer-vectors
+    st.push({ sx, sy }); //pushes the last sx and sy down one
+    maze[sx][sy].visited = true; 
 
-    while (!st.empty()) {
+    while (!st.empty()) { //while stack st is not empty
         auto [x, y] = st.top();
         std::array<int, 4> dirs = { 0, 1, 2, 3 };
         std::shuffle(dirs.begin(), dirs.end(), rng);
 
         bool moved = false;
-        for (int d : dirs) {
+        for (int d : dirs) { //for integer d in the range of dirs
             int nx = x + DX[d];
             int ny = y + DY[d];
             if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS && !maze[nx][ny].visited) {
@@ -55,7 +57,7 @@ void carveMaze(int sx = 0, int sy = 0) {
             }
         }
 
-        if (!moved) st.pop(); // Backtrack
+        if (!moved) st.pop(); // Backtrack if wall not moved
     }
 }
 
@@ -64,6 +66,8 @@ int main() {
     sf::RenderWindow window(sf::VideoMode({ WIDTH, HEIGHT }), "PIXEL PATH");
     window.setFramerateLimit(60);
     sf::Vector2u windowSize = window.getSize();
+
+    //Load in font
     sf::Font font;
     if (!font.openFromFile("Fonts/rainyhearts.ttf")) {
 
@@ -108,7 +112,7 @@ int main() {
     sf::Sound boostSound(boostBuffer);
 
 
-    carveMaze();
+    carveMaze(); //creates maze 
 
     const float playerSpeed = 150.0f; // pixels per second
 
@@ -119,7 +123,7 @@ int main() {
     sf::RectangleShape playerShape({ CELL_SIZE / 2.0f, CELL_SIZE / 2.0f });
     playerShape.setFillColor(sf::Color::Transparent);
 
-
+    //player texture/sprite
     sf::Texture playerTexture;
     if (!playerTexture.loadFromFile("Sprites/ExampleSprite.png")) {
         std::cerr << "ERROR::COULD NOT LOAD FILE::Sprites/ExampleSprite.png" << std::endl;
@@ -167,25 +171,28 @@ int main() {
                 window.close();
 
         }
-        // Menu logic
+        // Starting screen (if not started)
         if (!started) {
             sf::FloatRect infoRect = info.getLocalBounds();
             info.setOrigin(infoRect.getCenter());
             info.setPosition({ WIDTH / 2.0f, HEIGHT / 2.0f });
             info.setCharacterSize(60u);
             info.setString("PIXEL PATH\n\nEnter   Start\nEsc     Exit");
+
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scan::Enter)) {
-                gameStart.play();
+                gameStart.play(); //play starting sound
                 started = true; gameClock.restart();
 
             }
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scan::Escape))
                 window.close();
         }
-        else if (finished) {
+        else if (finished) { //Win screen, if finished
+            gameClock.stop();
+            sf::Time totalTime = gameClock.getElapsedTime();
             std::ostringstream ss;
             ss << "CONGRATULATIONS!!\nYou Win!\nScore: " << score << "\nTime: " <<
-                static_cast<int>(elapsed.asSeconds()) << "s\n\nEsc to exit";
+                static_cast<int>(totalTime.asSeconds()) << "s\n\nEsc to exit";
             info.setString(ss.str());
             sf::FloatRect infoRect = info.getLocalBounds();
             info.setOrigin(infoRect.getCenter());
@@ -198,6 +205,7 @@ int main() {
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scan::P)) {
                 paused = !paused;
                 if (paused) {
+
                     elapsed = elapsed - pausedTime;
                 }
                 else {
